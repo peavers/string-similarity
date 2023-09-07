@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:1.9.0-cpu
+FROM pytorch/manylinux-cpu
 
 # Set the working directory in the container
 WORKDIR /app
