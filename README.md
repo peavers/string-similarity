@@ -1,9 +1,10 @@
 # BERT String Similarity Service
 
----
 This repository provides a Flask-based API service for computing semantic similarity between a list of strings using the
 BERT (Bidirectional Encoder Representations from Transformers) model. The code is designed to be straightforward to
 understand and can be easily integrated into various projects requiring similarity measurement among text strings.
+
+---
 
 ### Features
 
@@ -21,7 +22,7 @@ understand and can be easily integrated into various projects requiring similari
 
 2. Install the required packages.
    ```bash
-   pip install flask transformers torch
+   pip install -r requirements.txt
    ```
 
 ### Running the Service
@@ -29,7 +30,7 @@ understand and can be easily integrated into various projects requiring similari
 After setting up, you can run the service by executing:
 
 ```bash
-python <filename>.py
+python main.py
 ```
 
 This will start the Flask server, and you can access the API endpoint at `http://localhost:5000/similarity`.
