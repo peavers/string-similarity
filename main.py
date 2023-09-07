@@ -20,17 +20,35 @@ def encode_string(s):
 @app.route('/similarity', methods=['POST'])
 def similarity():
     data = request.get_json()
-    string1 = data.get('string1')
-    string2 = data.get('string2')
+    strings = data.get('strings')
 
-    if not string1 or not string2:
-        return jsonify({"error": "Both 'string1' and 'string2' are required."}), 400
+    if not strings or not isinstance(strings, list) or len(strings) < 2:
+        return jsonify({"error": "Provide a list of at least two strings to compare."}), 400
 
-    string1_embedding = encode_string(string1)
-    string2_embedding = encode_string(string2)
-    similarity_score = cosine_similarity(string1_embedding, string2_embedding).item()
+    embeddings = [encode_string(s) for s in strings]
 
-    return jsonify({"similarity": similarity_score})
+    # Compute average similarity among all pairs
+    total_similarities = 0
+    num_pairs = 0
+    similarities_per_string = [0] * len(strings)
+    for i in range(len(embeddings)):
+        for j in range(len(embeddings)):
+            if i != j:
+                sim = cosine_similarity(embeddings[i], embeddings[j]).item()
+                total_similarities += sim
+                similarities_per_string[i] += sim
+                num_pairs += 1
+
+    average_similarity = total_similarities / num_pairs
+
+    # Identify strings with below-average similarity
+    threshold = 0.9
+    less_similar_strings = [strings[i] for i, sim in enumerate(similarities_per_string) if sim / (len(strings) - 1) < threshold]
+
+    return jsonify({
+        "average_similarity": average_similarity,
+        "less_similar_strings": less_similar_strings
+    })
 
 
 if __name__ == '__main__':
