@@ -17,6 +17,9 @@ RUN apt-get update && apt-get install -y \
 RUN pip install --no-cache-dir torch==1.9.0+cpu torchvision==0.10.0+cpu torchaudio==0.9.0 -f https://download.pytorch.org/whl/torch_stable.html
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Download BERT model during build
+RUN python -c "from transformers import BertModel; BertModel.from_pretrained('bert-base-uncased')"
+
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
 
