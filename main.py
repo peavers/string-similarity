@@ -9,13 +9,11 @@ app = Flask(__name__)
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertModel.from_pretrained('bert-base-uncased')
 
-
 def encode_string(s):
     tokens = tokenizer(s, return_tensors='pt', padding=True, truncation=True, max_length=128)
     with torch.no_grad():
         embeddings = model(**tokens).last_hidden_state
     return embeddings.mean(dim=1)
-
 
 @app.route('/similarity', methods=['POST'])
 def similarity():
@@ -27,29 +25,28 @@ def similarity():
 
     embeddings = [encode_string(s) for s in strings]
 
-    # Compute average similarity among all pairs
-    total_similarities = 0
-    num_pairs = 0
-    similarities_per_string = [0] * len(strings)
+    # Compute similarity matrix
+    sim_matrix = [[0 for _ in range(len(embeddings))] for _ in range(len(embeddings))]
     for i in range(len(embeddings)):
         for j in range(len(embeddings)):
             if i != j:
-                sim = cosine_similarity(embeddings[i], embeddings[j]).item()
-                total_similarities += sim
-                similarities_per_string[i] += sim
-                num_pairs += 1
+                sim_matrix[i][j] = cosine_similarity(embeddings[i], embeddings[j]).item()
 
-    average_similarity = total_similarities / num_pairs
-
-    # Identify strings with below-average similarity
+    # Group similar strings based on similarity matrix
     threshold = 0.9
-    less_similar_strings = [strings[i] for i, sim in enumerate(similarities_per_string) if sim / (len(strings) - 1) < threshold]
+    visited = [False] * len(strings)
+    groups = []
 
-    return jsonify({
-        "average_similarity": average_similarity,
-        "less_similar_strings": less_similar_strings
-    })
+    for i in range(len(strings)):
+        if not visited[i]:
+            current_group = [strings[i]]
+            for j in range(len(strings)):
+                if i != j and sim_matrix[i][j] >= threshold:
+                    current_group.append(strings[j])
+                    visited[j] = True
+            groups.append(current_group)
 
+    return jsonify({"groups": groups})
 
 if __name__ == '__main__':
     app.run(debug=True)
