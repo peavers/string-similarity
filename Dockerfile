@@ -7,6 +7,9 @@ WORKDIR /app
 # Copy the local package files to the container
 COPY . .
 
+# Change to the source directory
+WORKDIR /app/src
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -15,7 +18,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r ../requirements.txt
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
