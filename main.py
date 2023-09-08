@@ -9,11 +9,13 @@ app = Flask(__name__)
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertModel.from_pretrained('bert-base-uncased')
 
+
 def encode_string(s):
     tokens = tokenizer(s, return_tensors='pt', padding=True, truncation=True, max_length=128)
     with torch.no_grad():
         embeddings = model(**tokens).last_hidden_state
     return embeddings.mean(dim=1)
+
 
 @app.route('/similarity', methods=['POST'])
 def similarity():
@@ -36,19 +38,21 @@ def similarity():
                 sim_matrix[i][j] = cosine_similarity(embeddings[i], embeddings[j]).item()
 
     # Group similar strings based on similarity matrix
-    visited = [False] * len(strings)
+    visited = set()
     groups = []
 
     for i in range(len(strings)):
-        if not visited[i]:
+        if i not in visited:
             current_group = [strings[i]]
-            for j in range(len(strings)):
-                if i != j and sim_matrix[i][j] >= threshold:
+            visited.add(i)
+            for j in range(i + 1, len(strings)):
+                if j not in visited and sim_matrix[i][j] >= threshold:
                     current_group.append(strings[j])
-                    visited[j] = True
+                    visited.add(j)
             groups.append(current_group)
 
     return jsonify({"groups": groups})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
