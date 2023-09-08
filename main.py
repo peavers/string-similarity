@@ -11,9 +11,11 @@ model = BertModel.from_pretrained('bert-base-uncased')
 
 
 def encode_string(s):
+    s = s.replace('.', ' ')  # Replace periods with spaces for better matching
     tokens = tokenizer(s, return_tensors='pt', padding=True, truncation=True, max_length=128)
     with torch.no_grad():
         embeddings = model(**tokens).last_hidden_state
+
     return embeddings.mean(dim=1)
 
 
