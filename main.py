@@ -20,6 +20,9 @@ def similarity():
     data = request.get_json()
     strings = data.get('strings')
 
+    # Get threshold from query parameters. Default to 0.9 if not provided.
+    threshold = float(request.args.get('threshold', 0.9))
+
     if not strings or not isinstance(strings, list) or len(strings) < 2:
         return jsonify({"error": "Provide a list of at least two strings to compare."}), 400
 
@@ -33,7 +36,6 @@ def similarity():
                 sim_matrix[i][j] = cosine_similarity(embeddings[i], embeddings[j]).item()
 
     # Group similar strings based on similarity matrix
-    threshold = 0.9
     visited = [False] * len(strings)
     groups = []
 
