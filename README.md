@@ -1,16 +1,16 @@
-# BERT String Similarity Service
+# Sentence Transformer String Grouping Service
 
-This repository provides a Flask-based API service for computing semantic similarity between a list of strings using the
-BERT (Bidirectional Encoder Representations from Transformers) model. The code is designed to be straightforward to
-understand and can be easily integrated into various projects requiring similarity measurement among text strings.
+This repository offers a Flask-based API service to group semantically similar strings using the Sentence Transformer
+model. The code is designed for ease of understanding and integration into projects that require text grouping based on
+semantic similarity.
 
 ---
 
 ### Features
 
-- Uses BERT for generating dense vector representations of text strings.
-- Computes pairwise cosine similarity to measure how close two vectors are.
-- Returns average similarity and identifies strings that have below-average similarity.
+- Utilizes the Sentence Transformer for generating dense vector representations of text strings.
+- Groups similar strings based on a specified similarity threshold.
+- Returns groups of similar strings.
 
 ## Installation and Setup
 
@@ -27,24 +27,24 @@ understand and can be easily integrated into various projects requiring similari
 
 ### Running the Service
 
-After setting up, you can run the service by executing:
+After setup, run the service using:
 
 ```bash
 python main.py
 ```
 
-This will start the Flask server, and you can access the API endpoint at `http://localhost:5000/similarity`.
+This starts the Flask server, making the API endpoint accessible at `http://localhost:5000/similarity`.
 
 ---
 
 ## Using Docker
 
-For those who prefer containerization, we provide a Docker image that encapsulates all the dependencies and setup,
-offering a straightforward way to run the string similarity service.
+For those favoring containerization, a Docker image is available that wraps all dependencies and setup, offering a
+seamless method to run the string grouping service.
 
 ### Pulling the Docker Image
 
-To get the Docker image, use the following command:
+Fetch the Docker image with:
 
 ```bash
 docker pull peavers/string-similarity
@@ -52,70 +52,72 @@ docker pull peavers/string-similarity
 
 ### Running the Service with Docker
 
-After pulling the image, you can run the service with:
+After downloading the image, execute the service with:
 
 ```bash
 docker run -p 5000:5000 peavers/string-similarity
 ```
 
-This command maps port `5000` inside the container to port `5000` on your machine. Once executed, the service will be
-accessible at `http://localhost:5000/similarity`.
+This command routes port `5000` within the container to port `5000` on your machine. The service is then accessible
+at `http://localhost:5000/similarity`.
 
 ### Notes for Docker Users
 
-- Ensure Docker is properly installed and running on your machine. If new to Docker, refer to
-  the [official documentation](https://docs.docker.com/get-started/) to get started.
-- Running BERT inside a Docker container will require a sufficient amount of memory. Ensure the Docker engine has enough
-  resources allocated.
+- Ensure Docker is properly installed and operational. For Docker beginners, consult
+  the [official documentation](https://docs.docker.com/get-started/).
+- Ensure Docker has adequate resources, given that Sentence Transformer models can be memory-intensive.
 
 ---
 
 ## How to Use
 
-To compute similarity among a set of strings, make a POST request to the `/similarity` endpoint with a JSON payload
-containing the list of strings. Here's an example using `curl`:
+To group similar strings, make a POST request to the `/similarity` endpoint with a JSON payload listing the strings. An
+example using `curl`:
 
 ```bash
-curl -X POST http://localhost:5000/similarity -H "Content-Type: application/json" -d '{"strings": ["Hello world", "Greetings earth", "Hi there"]}'
+curl -X POST http://localhost:5000/similarity?threshold=0.98 -H "Content-Type: application/json" -d '{"strings": ["Hello world", "Greetings earth", "Hi there"]}'
 ```
 
 Expected Response:
 
 ```json
 {
-  "average_similarity": 0.9421,
-  "less_similar_strings": [
-    "Hi there"
+  "groups": [
+    [
+      "Hello world",
+      "Greetings earth"
+    ],
+    [
+      "Hi there"
+    ]
   ]
 }
 ```
 
 ## How it Works
 
-1. **BERT Tokenization and Embedding:** Strings are tokenized using the BERT tokenizer, and embeddings are generated
-   using the BERT model. The embeddings are dense vectors that capture the contextual information of the text.
+1. **Sentence Transformer Embedding:** Text strings are transformed into embeddings via the Sentence Transformer model.
+   These embeddings are dense vectors reflecting the text's semantic information.
 
-2. **Computing Similarity:** The cosine similarity between all pairs of strings is computed. This metric ranges from
-   -1 (completely dissimilar) to 1 (completely similar), with 0 indicating orthogonality.
+2. **Grouping Similar Strings:** Using the cosine similarity, strings are grouped based on a specified threshold.
 
-3. **Response:** The service computes an average similarity across all pairs and also identifies any string that has a
-   below-average similarity against the others.
+3. **Response:** The service returns groups of similar strings.
 
 ### Future Enhancements
 
-- Support for other transformer models.
-- Batch processing for handling large volumes of text efficiently.
-- Additional metrics for comparing text strings.
+- Potential support for other transformer models.
+- Batch processing for efficiently managing high volumes of text.
+- More metrics and methods for text comparison.
 
 ### Contributing
 
-We welcome contributions! Please open an issue if you find any, or submit a pull request if you have improvements.
+Contributions are welcome! Open an issue for any problems, or submit pull requests for enhancements.
 
 ---
 
-**Note**: Ensure you have enough memory and computational power to run BERT, as it's a large model. If you're planning
-to deploy this in a production environment, consider using dedicated hardware or cloud services.
+**Note**: Make sure you have adequate computational resources when running the Sentence Transformer model. For
+production deployment, consider dedicated hardware or cloud solutions.
 
 ---
 
-For any issues, questions, or feedback, please open an issue in this repository.
+For questions, feedback, or issues, open an issue in this repository.

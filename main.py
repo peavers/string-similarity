@@ -1,22 +1,14 @@
 from flask import Flask, request, jsonify
-from transformers import BertTokenizer, BertModel
-import torch
-from torch.nn.functional import cosine_similarity
+from sentence_transformers import SentenceTransformer, util
 
 app = Flask(__name__)
 
-# Load pre-trained BERT model and tokenizer
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-model = BertModel.from_pretrained('bert-base-uncased')
+# Load the sentence-transformer model
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
 
 def encode_string(s):
-    s = s.replace('.', ' ')  # Replace periods with spaces for better matching
-    tokens = tokenizer(s, return_tensors='pt', padding=True, truncation=True, max_length=128)
-    with torch.no_grad():
-        embeddings = model(**tokens).last_hidden_state
-
-    return embeddings.mean(dim=1)
+    return model.encode(s, convert_to_tensor=True)
 
 
 @app.route('/similarity', methods=['POST'])
@@ -24,36 +16,37 @@ def similarity():
     data = request.get_json()
     strings = data.get('strings')
 
-    # Get threshold from query parameters. Default to 0.9 if not provided.
-    threshold = float(request.args.get('threshold', 0.9))
+    # Default if none is provided.
+    threshold = float(request.args.get('threshold', 0.98))
 
     if not strings or not isinstance(strings, list) or len(strings) < 2:
         return jsonify({"error": "Provide a list of at least two strings to compare."}), 400
 
     embeddings = [encode_string(s) for s in strings]
 
-    # Compute similarity matrix
-    sim_matrix = [[0 for _ in range(len(embeddings))] for _ in range(len(embeddings))]
-    for i in range(len(embeddings)):
-        for j in range(len(embeddings)):
-            if i != j:
-                sim_matrix[i][j] = cosine_similarity(embeddings[i], embeddings[j]).item()
+    grouped = []
+    while embeddings:
+        current_embedding = embeddings.pop(0)
+        current_string = strings.pop(0)
 
-    # Group similar strings based on similarity matrix
-    visited = set()
-    groups = []
+        group = [current_string]
+        other_indices = []
 
-    for i in range(len(strings)):
-        if i not in visited:
-            current_group = [strings[i]]
-            visited.add(i)
-            for j in range(i + 1, len(strings)):
-                if j not in visited and sim_matrix[i][j] >= threshold:
-                    current_group.append(strings[j])
-                    visited.add(j)
-            groups.append(current_group)
+        for idx, other_embedding in enumerate(embeddings):
+            sim = util.pytorch_cos_sim(current_embedding, other_embedding).item()
+            if sim >= threshold:
+                group.append(strings[idx])
+                other_indices.append(idx)
 
-    return jsonify({"groups": groups})
+        for idx in reversed(other_indices):
+            embeddings.pop(idx)
+            strings.pop(idx)
+
+        grouped.append(group)
+
+    return jsonify({
+        "groups": grouped
+    })
 
 
 if __name__ == '__main__':
